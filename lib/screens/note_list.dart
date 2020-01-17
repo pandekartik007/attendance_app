@@ -17,25 +17,9 @@ class NoteListState extends State<NoteList> {
   DatabaseHelper databaseHelper = DatabaseHelper();
   List<Note> noteList;
   int count = 0;
-  double reqPercentage = 75;
+  double reqPercentage=75;
   double newPercent;
-  TextEditingController _textEditingController;
 
-  @override
-  void initState() {
-    super.initState();
-    _textEditingController.addListener(_changedValues);
-  }
-
-  @override
-  void dispose() {
-    _textEditingController.dispose();
-    super.dispose();
-  }
-
-  _changedValues() {
-    print('${_textEditingController.text}');
-  }
   @override
   Widget build(BuildContext context) {
     if (noteList == null) {
@@ -96,7 +80,7 @@ class NoteListState extends State<NoteList> {
             icon: Icon(Icons.add),
             onPressed: () {
               debugPrint('FAB clicked');
-              navigateToDetail(Note('', 0, 0), 'Add Subject');
+              navigateToDetail(Note('', 0, 0), 'Add Subject', reqPercentage);
             },
           ),
           IconButton(
@@ -106,57 +90,45 @@ class NoteListState extends State<NoteList> {
                 context: context,
                 builder: (BuildContext context) {
                   return AlertDialog(
-                    title: Text('Minimum attendace needed\nCurrent: $reqPercentage'),
+                    title: Text(
+                        'Minimum attendace needed\nCurrent: $reqPercentage'),
                     content: TextField(
-                        decoration: InputDecoration(
-                          hintText: '$reqPercentage',
-                        ),
-                        keyboardType: TextInputType.number,
-                        onChanged: (value) {
-                          newPercent = double.parse(value);
-                        },
+                      decoration: InputDecoration(
+                        hintText: '$reqPercentage',
                       ),
-                   actions: <Widget>[
+                      keyboardType: TextInputType.number,
+                      onChanged: (value) {
+                        newPercent = double.parse(value);
+                      },
+                    ),
+                    actions: <Widget>[
                       FlatButton(
                         child: Text('Close'),
                         onPressed: () => Navigator.of(context).pop(),
                       ),
                       FlatButton(
                         child: Text('Save'),
-                        onPressed: () {
-                          reqPercentage = newPercent;
+                        onPressed: newPercent!=null ? () {
                           setState(() {
+                            reqPercentage = newPercent;
                             updateListView();
                           });
                           Navigator.of(context).pop();
-                        },
+                        } : null,
                       )
                     ],
-                    
                   );
                 },
-                /*Slider(
-                  min: 0,
-                  max: 100,
-                  divisions: 5,
-                  value: reqPercentage,
-                  onChanged: (newValue) {
-                    setState(() {
-                      reqPercentage=newValue;
-                      updateListView();
-                    });
-                  },
-                ),*/
               );
             },
           )
         ],
       ),
-      body: getNoteListView(),
+      body:getNoteListView(),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           debugPrint('FAB clicked');
-          navigateToDetail(Note('', 0, 0), 'Add Subject');
+          navigateToDetail(Note('', 0, 0), 'Add Subject', reqPercentage);
         },
         tooltip: 'Add Subject',
         child: Icon(Icons.add),
@@ -174,7 +146,7 @@ class NoteListState extends State<NoteList> {
         int percent = ((present / total) * 100).ceil();
         return Padding(
           padding: const EdgeInsets.only(
-            top: 10,
+            top: 20,
           ),
           child: Card(
             shape: RoundedRectangleBorder(
@@ -184,7 +156,7 @@ class NoteListState extends State<NoteList> {
               ),
               borderRadius: BorderRadius.circular(20),
             ),
-            color: Colors.blueAccent,
+            color: Colors.blueGrey,
             elevation: 10,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -220,7 +192,8 @@ class NoteListState extends State<NoteList> {
                     ),*/
                     onTap: () {
                       debugPrint("ListTile Tapped");
-                      navigateToDetail(this.noteList[position], 'Edit Subject');
+                      navigateToDetail(this.noteList[position], 'Edit Subject',
+                          reqPercentage);
                     },
                   ),
                 ),
@@ -248,12 +221,21 @@ class NoteListState extends State<NoteList> {
   }
 
   int numberOfLecturesRequired(int total, int present) {
-    int x = (((reqPercentage * 0.01) * total - present) / 0.25).ceil();
+    int a = 0;
+    int x;
+    if (reqPercentage == 100)
+      x = a;
+    else
+      x = (((reqPercentage * 0.01) * total - present) /
+              ((100 - reqPercentage) * 0.01))
+          .ceil();
     int bunks = 0;
     int t = total + 1;
     if (x < 0) {
       while (x < 0) {
-        x = (((reqPercentage * 0.01) * t - present) / 0.25).ceil();
+        x = (((reqPercentage * 0.01) * t - present) /
+                ((100 - reqPercentage) * 0.01))
+            .ceil();
         if (x <= 0) bunks++;
         t++;
       }
@@ -262,23 +244,11 @@ class NoteListState extends State<NoteList> {
     return x;
   }
 
-  void _delete(BuildContext context, Note note) async {
-    int result = await databaseHelper.deleteNote(note.id);
-    if (result != 0) {
-      _showSnackBar(context, 'Note Deleted Successfully');
-      updateListView();
-    }
-  }
 
-  void _showSnackBar(BuildContext context, String message) {
-    final snackBar = SnackBar(content: Text(message));
-    Scaffold.of(context).showSnackBar(snackBar);
-  }
-
-  void navigateToDetail(Note note, String title) async {
+  void navigateToDetail(Note note, String title, double reqPercentage) async {
     bool result =
         await Navigator.push(context, MaterialPageRoute(builder: (context) {
-      return NoteDetail(note, title);
+      return NoteDetail(note, title, reqPercentage);
     }));
 
     if (result == true) {
@@ -343,4 +313,52 @@ class NoteListState extends State<NoteList> {
       ),
     );
   }
+
+  
+  var text = new RichText(
+    text: new TextSpan(
+      // Note: Styles for TextSpans must be explicitly defined.
+      // Child text spans will inherit styles from parent
+      style: new TextStyle(
+        fontSize: 14.0,
+        color: Colors.black,
+      ),
+      children: <TextSpan>[
+        new TextSpan(text: 'Hello'),
+        new TextSpan(
+            text: '', style: new TextStyle(fontWeight: FontWeight.bold)),
+      ],
+    ),
+  );
+
+  /*Widget _percentDialog() {
+    return AlertDialog(
+      title: Text('Set minimum attendace needed'),
+      content: TextField(
+        decoration: InputDecoration(
+          hintText: '',
+        ),
+        keyboardType: TextInputType.number,
+        onChanged: (value) {
+          newPercent = double.parse(value);
+        },
+      ),
+      actions: <Widget>[
+        FlatButton(
+          child: Text('Close'),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        FlatButton(
+          child: Text('Save'),
+          onPressed: () {
+            reqPercentage = newPercent;
+            setState(() {
+              updateListView();
+            });
+            Navigator.of(context).pop();
+          },
+        )
+      ],
+    );
+  }*/
 }

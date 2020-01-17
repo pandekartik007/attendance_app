@@ -9,12 +9,13 @@ import 'package:flutter_circular_chart/flutter_circular_chart.dart';
 class NoteDetail extends StatefulWidget {
   final String appBarTitle;
   final Note note;
+  final double reqPercentage;
 
-  NoteDetail(this.note, this.appBarTitle);
+  NoteDetail(this.note, this.appBarTitle,this.reqPercentage);
 
   @override
   State<StatefulWidget> createState() {
-    return NoteDetailState(this.note, this.appBarTitle);
+    return NoteDetailState(this.note, this.appBarTitle,this.reqPercentage);
   }
 }
 
@@ -26,12 +27,13 @@ class NoteDetailState extends State<NoteDetail> {
 
   String appBarTitle;
   Note note;
+  double reqPercentage;
 
   TextEditingController titleController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
   bool _validate = false;
 
-  NoteDetailState(this.note, this.appBarTitle);
+  NoteDetailState(this.note, this.appBarTitle,this.reqPercentage);
   Widget animatedCircularChart(int total, int present) {
     final GlobalKey<AnimatedCircularChartState> _chartKey =
         new GlobalKey<AnimatedCircularChartState>();
@@ -49,7 +51,7 @@ class NoteDetailState extends State<NoteDetail> {
           <CircularSegmentEntry>[
             new CircularSegmentEntry(
               (present / total) * 100,
-              ((present / total)*100)>=75 ? Colors.green : Colors.red,
+              ((present / total)*100)>=reqPercentage ? Colors.green : Colors.red,
               rankKey: 'completed',
             ),
             new CircularSegmentEntry(
