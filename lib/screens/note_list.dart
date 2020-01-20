@@ -5,6 +5,9 @@ import '../utils/database_helper.dart';
 import '../screens/note_detail.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:flutter_circular_chart/flutter_circular_chart.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
+import '../utils/selections.dart';
 
 class NoteList extends StatefulWidget {
   @override
@@ -17,8 +20,24 @@ class NoteListState extends State<NoteList> {
   DatabaseHelper databaseHelper = DatabaseHelper();
   List<Note> noteList;
   int count = 0;
-  double reqPercentage=75;
-  double newPercent;
+  double reqPercentage = 75;
+  double newPercent = 0;
+  final date = DateTime.now();
+
+  _changed() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      prefs.setDouble('percent', newPercent);
+    });
+    _save();
+  }
+
+  _save() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      reqPercentage = prefs.getDouble('percent');
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,8 +49,35 @@ class NoteListState extends State<NoteList> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text('Attendace Tracker'),
+        title: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              'Attendace Tracker',
+            ),
+            SizedBox(
+              width: 15,
+            ),
+            Text(
+              '${new DateFormat().add_MMMd().format(date)},${new DateFormat("EEEE").format(date)}',
+              style: TextStyle(color: Colors.teal),
+            ),
+          ],
+        ),
         actions: <Widget>[
+          PopupMenuButton<String>(
+            onSelected: choiceAction,
+            itemBuilder: (BuildContext context) {
+              return Selections.choices.map((String choice) {
+                return PopupMenuItem<String>(
+                  value: choice,
+                  child: Text(choice),
+                );
+              }).toList();
+            },
+          )
+        ],
+        /*actions: <Widget>[
           IconButton(
             tooltip: 'DELETE ALL SUBJECTS',
             icon: Icon(Icons.delete),
@@ -77,13 +123,16 @@ class NoteListState extends State<NoteList> {
             },
           ),
           IconButton(
+            tooltip: 'ADD NEW SUBJECT',
             icon: Icon(Icons.add),
             onPressed: () {
               debugPrint('FAB clicked');
-              navigateToDetail(Note('', 0, 0), 'Add Subject', reqPercentage);
+              navigateToDetail(
+                  Note('', 0, 0), 'Add Subject', reqPercentage);
             },
           ),
           IconButton(
+            tooltip: 'EDIT ATTENDANCE REQUIRED',
             icon: Icon(Icons.edit),
             onPressed: () {
               showDialog(
@@ -99,6 +148,7 @@ class NoteListState extends State<NoteList> {
                       keyboardType: TextInputType.number,
                       onChanged: (value) {
                         newPercent = double.parse(value);
+                        _changed();
                       },
                     ),
                     actions: <Widget>[
@@ -108,13 +158,16 @@ class NoteListState extends State<NoteList> {
                       ),
                       FlatButton(
                         child: Text('Save'),
-                        onPressed: newPercent!=null ? () {
-                          setState(() {
-                            reqPercentage = newPercent;
-                            updateListView();
-                          });
-                          Navigator.of(context).pop();
-                        } : null,
+                        onPressed: newPercent != null
+                            ? () {
+                                setState(() {
+                                  reqPercentage = newPercent;
+                                  _save();
+                                  updateListView();
+                                });
+                                Navigator.of(context).pop();
+                              }
+                            : null,
                       )
                     ],
                   );
@@ -122,9 +175,9 @@ class NoteListState extends State<NoteList> {
               );
             },
           )
-        ],
+        ],*/
       ),
-      body:getNoteListView(),
+      body: getNoteListView(),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           debugPrint('FAB clicked');
@@ -137,13 +190,17 @@ class NoteListState extends State<NoteList> {
   }
 
   ListView getNoteListView() {
+    if (reqPercentage == null) {
+      reqPercentage = 0;
+      //_percentDialog();
+    }
     return ListView.builder(
       itemCount: count,
       itemBuilder: (BuildContext context, int position) {
         int total = this.noteList[position].total;
         int present =
             this.noteList[position].total - this.noteList[position].missed;
-        int percent = ((present / total) * 100).ceil();
+        double percent = ((present / total) * 100);
         return Padding(
           padding: const EdgeInsets.only(
             top: 20,
@@ -244,7 +301,6 @@ class NoteListState extends State<NoteList> {
     return x;
   }
 
-
   void navigateToDetail(Note note, String title, double reqPercentage) async {
     bool result =
         await Navigator.push(context, MaterialPageRoute(builder: (context) {
@@ -269,6 +325,7 @@ class NoteListState extends State<NoteList> {
       Future<List<Note>> noteListFuture = databaseHelper.getNoteList();
       noteListFuture.then((noteList) {
         setState(() {
+          this.reqPercentage = reqPercentage;
           this.noteList = noteList;
           this.count = noteList.length;
         });
@@ -280,28 +337,36 @@ class NoteListState extends State<NoteList> {
     final GlobalKey<AnimatedCircularChartState> _chartKey =
         new GlobalKey<AnimatedCircularChartState>();
     final _chartSize = const Size(80, 80);
-    int print = ((present / total) * 100).ceil();
+    int print;
+    if (total == 0)
+      print = 0;
+    else
+      print = ((present / total) * 100).ceil();
     return new AnimatedCircularChart(
       key: _chartKey,
       size: _chartSize,
       initialChartData: <CircularStackEntry>[
-        new CircularStackEntry(
-          <CircularSegmentEntry>[
-            new CircularSegmentEntry(
-              (present / total) * 100,
-              ((present / total) * 100) >= reqPercentage
-                  ? Colors.green
-                  : Colors.red,
-              rankKey: 'completed',
-            ),
-            new CircularSegmentEntry(
-              (1 - (present / total)) * 100,
-              Colors.white,
-              rankKey: 'remaining',
-            ),
-          ],
-          rankKey: 'progress',
-        ),
+        total == 0
+            ? new CircularStackEntry(<CircularSegmentEntry>[
+                new CircularSegmentEntry(100, Colors.white)
+              ])
+            : new CircularStackEntry(
+                <CircularSegmentEntry>[
+                  new CircularSegmentEntry(
+                    (present / total) * 100,
+                    ((present / total) * 100) >= reqPercentage
+                        ? Colors.green
+                        : Colors.red,
+                    rankKey: 'completed',
+                  ),
+                  new CircularSegmentEntry(
+                    (1 - (present / total)) * 100,
+                    Colors.white,
+                    rankKey: 'remaining',
+                  ),
+                ],
+                rankKey: 'progress',
+              ),
       ],
       chartType: CircularChartType.Radial,
       percentageValues: true,
@@ -314,7 +379,6 @@ class NoteListState extends State<NoteList> {
     );
   }
 
-  
   var text = new RichText(
     text: new TextSpan(
       // Note: Styles for TextSpans must be explicitly defined.
@@ -331,34 +395,85 @@ class NoteListState extends State<NoteList> {
     ),
   );
 
-  /*Widget _percentDialog() {
-    return AlertDialog(
-      title: Text('Set minimum attendace needed'),
-      content: TextField(
-        decoration: InputDecoration(
-          hintText: '',
-        ),
-        keyboardType: TextInputType.number,
-        onChanged: (value) {
-          newPercent = double.parse(value);
-        },
-      ),
-      actions: <Widget>[
-        FlatButton(
-          child: Text('Close'),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        FlatButton(
-          child: Text('Save'),
-          onPressed: () {
-            reqPercentage = newPercent;
-            setState(() {
-              updateListView();
+
+  void choiceAction(String choice) {
+    if (choice == Selections.delete) {
+      if (noteList != null) {
+        showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: new Text("DELETE ALL"),
+                content: Text('ARE YOU SURE YOU WANT TO DELETE ALL ENTRIES?'),
+                actions: <Widget>[
+                  FlatButton(
+                    child: Text('Close'),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                  FlatButton(
+                    child: Text('Accept'),
+                    onPressed: deleteListView,
+                  )
+                ],
+              );
             });
-            Navigator.of(context).pop();
-          },
-        )
-      ],
-    );
-  }*/
+      } else {
+        showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text('List already Empty'),
+                content: Text('No subjects to delete'),
+                actions: <Widget>[
+                  FlatButton(
+                    child: Text('Close'),
+                    onPressed: () => Navigator.of(context).pop(),
+                  )
+                ],
+              );
+            });
+      }
+    } else if (choice == Selections.add) {
+      debugPrint('FAB clicked');
+      navigateToDetail(Note('', 0, 0), 'Add Subject', reqPercentage);
+    } else if (choice == Selections.edit) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Minimum attendace needed\nCurrent: $reqPercentage'),
+            content: TextField(
+              decoration: InputDecoration(
+                hintText: '$reqPercentage',
+              ),
+              keyboardType: TextInputType.number,
+              onChanged: (value) {
+                newPercent = double.parse(value);
+                _changed();
+              },
+            ),
+            actions: <Widget>[
+              FlatButton(
+                child: Text('Close'),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+              FlatButton(
+                child: Text('Save'),
+                onPressed: newPercent != null
+                    ? () {
+                        setState(() {
+                          reqPercentage = newPercent;
+                          _save();
+                          updateListView();
+                        });
+                        Navigator.of(context).pop();
+                      }
+                    : null,
+              )
+            ],
+          );
+        },
+      );
+    }
+  }
 }

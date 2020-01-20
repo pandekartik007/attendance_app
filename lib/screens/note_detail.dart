@@ -47,6 +47,11 @@ class NoteDetailState extends State<NoteDetail> {
       key: _chartKey,
       size: _chartSize,
       initialChartData: <CircularStackEntry>[
+        total==0 ? new CircularStackEntry(
+          <CircularSegmentEntry>[
+            new CircularSegmentEntry(100, Colors.white)
+          ]
+          ) :
         new CircularStackEntry(
           <CircularSegmentEntry>[
             new CircularSegmentEntry(
@@ -181,8 +186,25 @@ class NoteDetailState extends State<NoteDetail> {
                                   onPressed: () {
                                     if (total > 0) {
                                       setState(() {
+                                      if(total>missed)
                                         total--;
-                                      });
+                                      else{
+                                        showDialog(
+                                          context: context,
+                                          builder: (BuildContext context){
+                                          return AlertDialog(
+                                            title: Text('ERROR'),
+                                            content: Text('Missed lectures can\'t be more than total lectures'),
+                                            actions: <Widget>[
+                                              FlatButton(
+                                                child: Text('Close'),
+                                                onPressed: () => Navigator.of(context).pop(),
+                                              )
+                                            ],
+                                          );}
+                                        );
+                                      }
+                                    });
                                       updateTotal();
                                     }
                                   },
@@ -271,6 +293,7 @@ class NoteDetailState extends State<NoteDetail> {
                 Padding(
                   padding: EdgeInsets.only(top: 15.0, bottom: 15.0),
                   child: TextField(
+                    maxLines: null,
                     controller: descriptionController,
                     style: TextStyle(color: Colors.white, fontSize: 25),
                     onChanged: (value) {
@@ -278,7 +301,7 @@ class NoteDetailState extends State<NoteDetail> {
                       updateDescription();
                     },
                     decoration: InputDecoration(
-                        labelText: 'Description',
+                        labelText: 'Notes for subject',
                         labelStyle: TextStyle(color: Colors.green, fontSize: 25),
                         enabledBorder: OutlineInputBorder(
                             borderSide: BorderSide(
@@ -295,7 +318,7 @@ class NoteDetailState extends State<NoteDetail> {
                       Expanded(
                         child: RaisedButton(
                           color: Theme.of(context).primaryColorDark,
-                          textColor: Theme.of(context).primaryColorLight,
+                          textColor: Colors.white,
                           child: Text(
                             'Save',
                             textScaleFactor: 1.5,
@@ -323,7 +346,7 @@ class NoteDetailState extends State<NoteDetail> {
                       Expanded(
                         child: RaisedButton(
                           color: Theme.of(context).primaryColorDark,
-                          textColor: Theme.of(context).primaryColorLight,
+                          textColor: Colors.white,
                           child: Text(
                             'Delete',
                             textScaleFactor: 1.5,

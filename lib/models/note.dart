@@ -9,7 +9,7 @@ class Note {
   int _missed;
 
 
-  Note(this._title,  this._total,this._missed, [this._description]);
+  Note(this._title,  this._total,this._missed,[this._description]);
 
   Note.withId(this._id, this._title,  this._total,this._missed, [this._description]);
 
