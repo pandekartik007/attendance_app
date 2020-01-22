@@ -442,8 +442,7 @@ class NoteDetailState extends State<NoteDetail> {
   void _delete() async {
     moveToLastScreen();
 
-    // Case 1: If user is trying to delete the NEW NOTE i.e. he has come to
-    // the detail page by pressing the FAB of NoteList page.
+    // Case 1: If user is trying to delete the NEW NOTE i.e. he has come to the detail page by pressing the FAB of NoteList page.
     if (note.id == null) {
       _showAlertDialog('Status', 'No Subject was deleted');
       return;
