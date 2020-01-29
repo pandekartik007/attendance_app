@@ -17,6 +17,7 @@ class DatabaseHelper {
   String colDescription = 'description';
   String colMissed = 'missed';
   String colTotal = 'total';
+  String colDate = 'date';
 
   DatabaseHelper._createInstance(); // Named constructor to create instance of DatabaseHelper
 
@@ -53,7 +54,8 @@ class DatabaseHelper {
       title TEXT,
       description TEXT,
       total INTEGER,
-      missed INTEGER
+      missed INTEGER,
+      date TEXT
       )
       ''');
     //await db.execute('''CREATE TABLE $noteTable($colId INTEGER PRIMARY KEY AUTOINCREMENT, $colTitle TEXT, $colDescription TEXT, $colTotal INTEGER NOT NULL, $colMissed INTEGER NOT NULL)''');

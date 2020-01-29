@@ -9,9 +9,9 @@ class Note {
   int _missed;
 
 
-  Note(this._title,  this._total,this._missed,[this._description]);
+  Note(this._title,this._date,  this._total,this._missed,[this._description]);
 
-  Note.withId(this._id, this._title,  this._total,this._missed, [this._description]);
+  Note.withId(this._id,this._date, this._title,  this._total,this._missed, [this._description]);
 
   int get id => _id;
 
@@ -62,6 +62,7 @@ class Note {
     map['description'] = _description;
     map['total'] = _total;
     map['missed'] = _missed;
+    map['date'] = _date;
 
     return map;
   }
@@ -73,6 +74,7 @@ class Note {
     this._description = map['description'];
     this._total = map['total'];
     this._missed = map['missed'];
+    this._date = map['date'];
   }
 }
 

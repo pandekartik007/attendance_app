@@ -58,9 +58,12 @@ class NoteListState extends State<NoteList> {
             SizedBox(
               width: 15,
             ),
-            Text(
-              '${new DateFormat().add_MMMd().format(date)},${new DateFormat("EEEE").format(date)}',
-              style: TextStyle(color: Colors.teal),
+            FittedBox(
+              fit: BoxFit.fitWidth,
+              child: Text(
+                '${new DateFormat().add_MMMd().format(date)},${new DateFormat("E").format(date)}',
+                style: TextStyle(color: Colors.teal),
+              ),
             ),
           ],
         ),
@@ -181,7 +184,7 @@ class NoteListState extends State<NoteList> {
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           debugPrint('FAB clicked');
-          navigateToDetail(Note('', 0, 0), 'Add Subject', reqPercentage);
+          navigateToDetail(Note('','', 0, 0), 'Add Subject', reqPercentage);
         },
         tooltip: 'Add Subject',
         child: Icon(Icons.add),
@@ -234,7 +237,7 @@ class NoteListState extends State<NoteList> {
                       ),
                     ),
                     subtitle: Text(
-                      'Attendance: $present/$total',
+                      'Attendance: $present/$total \n${noteList[position].date.toString()}',
                       style: TextStyle(color: Colors.white),
                     ),
                     trailing: animatedCircularChart(total, present),
@@ -435,7 +438,7 @@ class NoteListState extends State<NoteList> {
       }
     } else if (choice == Selections.add) {
       debugPrint('FAB clicked');
-      navigateToDetail(Note('', 0, 0), 'Add Subject', reqPercentage);
+      navigateToDetail(Note('','', 0, 0), 'Add Subject', reqPercentage);
     } else if (choice == Selections.edit) {
       showDialog(
         context: context,

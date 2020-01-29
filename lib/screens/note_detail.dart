@@ -5,6 +5,7 @@ import '../utils/reusable_card.dart';
 import '../utils//constants.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_circular_chart/flutter_circular_chart.dart';
+import 'package:intl/intl.dart';
 
 class NoteDetail extends StatefulWidget {
   final String appBarTitle;
@@ -421,6 +422,7 @@ class NoteDetailState extends State<NoteDetail> {
   // Save data to database
   void _save() async {
     moveToLastScreen();
+    note.date = DateFormat("dd-MM H:m:s").format(DateTime.now());
     int result;
     if (note.id != null) {
       // Case 1: Update operation
